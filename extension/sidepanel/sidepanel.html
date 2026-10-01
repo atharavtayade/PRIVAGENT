@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRIVAGENT — Autonomous Privacy Engine</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Nav / Branding & Privacy Firewall Status -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="title">PRIVAGENT</span>
+          <span class="badge-version">SIH26171</span>
+        </div>
+      </div>
+
+      <div class="firewall-badge" id="firewallBadge" title="Fail-Closed Hardware Privacy Boundary">
+        <span class="status-dot pulse-emerald"></span>
+        <span class="status-label" id="firewallStatusText">GATE: SECURE</span>
+      </div>
+    </header>
+
+    <!-- Task Controller Card -->
+    <section class="card task-card">
+      <div class="card-header">
+        <span class="card-title">Agent Instruction</span>
+        <div class="policy-selector">
+          <label for="policySelect">Policy:</label>
+          <select id="policySelect" class="styled-select">
+            <option value="BALANCED" selected>Balanced</option>
+            <option value="STRICT">Strict</option>
+            <option value="USER_DEFINED">Custom</option>
+          </select>
+        </div>
+      </div>
+      <div class="task-input-wrapper">
+        <input 
+          type="text" 
+          id="taskInput" 
+          placeholder="e.g. Check bill status and view receipt..."
+          autocomplete="off"
+        />
+        <button id="btnRunTask" class="btn-primary" title="Launch Autonomous Cycle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Run</span>
+        </button>
+        <button id="btnAbortTask" class="btn-secondary hidden" title="Halt Agent Loop">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+          </svg>
+          <span>Stop</span>
+        </button>
+      </div>
+
+      <!-- Pipeline Progress Stepper -->
+      <div class="pipeline-stepper" id="pipelineStepper">
+        <div class="step-node active" id="stepCapture" title="DOM & Visual Capture">
+          <span class="step-num">1</span>
+          <span class="step-name">Capture</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" id="stepDetect" title="Multi-layer PII Detection">
+          <span class="step-num">2</span>
+          <span class="step-name">Scan</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" id="stepRedact" title="Local BBox Masking">
+          <span class="step-num">3</span>
+          <span class="step-name">Redact</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" id="stepTransmit" title="Privacy Gate Verification">
+          <span class="step-num">4</span>
+          <span class="step-name">Gate</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" id="stepExecute" title="Validated Action">
+          <span class="step-num">5</span>
+          <span class="step-name">Act</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Signature Split View: Human View vs AI Server View -->
+    <section class="card split-view-card">
+      <div class="card-header">
+        <span class="card-title">Perception Boundary</span>
+        <div class="view-toggles">
+          <button id="toggleSplit" class="toggle-btn active" title="Side-by-side View">Split</button>
+          <button id="toggleHuman" class="toggle-btn" title="Inspect Raw Local View">Human</button>
+          <button id="toggleAi" class="toggle-btn" title="Inspect Sanitized Server View">AI Server</button>
+        </div>
+      </div>
+
+      <div class="split-viewport" id="splitViewport">
+        <!-- Left: Human View (Local Only) -->
+        <div class="view-pane human-pane" id="humanPane">
+          <div class="pane-header">
+            <span class="pane-title">
+              <span class="pill pill-green">HUMAN VIEW</span>
+              <span class="subtext">Device-Held Screen</span>
+            </span>
+            <span class="transmission-tag forbidden">TRANSMISSION: BLOCKED</span>
+          </div>
+          <div class="canvas-container" id="humanCanvasWrap">
+            <img id="humanImg" class="screen-view" alt="Waiting for screen capture..." />
+            <div id="humanOverlay" class="bbox-overlay"></div>
+          </div>
+        </div>
+
+        <!-- Right: AI Server View (Sanitized) -->
+        <div class="view-pane ai-pane" id="aiPane">
+          <div class="pane-header">
+            <span class="pane-title">
+              <span class="pill pill-cyan">AI SERVER VIEW</span>
+              <span class="subtext">Redacted Representation</span>
+            </span>
+            <span class="transmission-tag allowed">TRANSMISSION: PERMITTED</span>
+          </div>
+          <div class="canvas-container" id="aiCanvasWrap">
+            <img id="aiImg" class="screen-view" alt="Sanitized view generated on scan..." />
+            <div id="aiOverlay" class="bbox-overlay"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hover / Click Element Inspection Inspector -->
+      <div class="inspector-bar" id="inspectorBar">
+        <span class="inspector-prompt">Hover or click any redacted region above for verification details</span>
+      </div>
+    </section>
+
+    <!-- Metrics & SIH Telemetry Dashboard -->
+    <section class="card metrics-card">
+      <div class="card-header">
+        <span class="card-title">Privacy & Performance Telemetry</span>
+        <span class="iteration-count" id="iterationBadge">Iter: 0/20</span>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <span class="metric-label">PII Detections</span>
+          <span class="metric-value accent-rose" id="metricPiiCount">0</span>
+          <span class="metric-sub">Across 4 Layers</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Redactions</span>
+          <span class="metric-value accent-cyan" id="metricRedactCount">0</span>
+          <span class="metric-sub" id="metricRedactMode">Zero Leakage</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Local Latency</span>
+          <span class="metric-value accent-emerald" id="metricLocalMs">0 <span class="unit">ms</span></span>
+          <span class="metric-sub">Perception & Masking</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Raw Transmitted</span>
+          <span class="metric-value accent-amber" id="metricRawSent">0 <span class="unit">bytes</span></span>
+          <span class="metric-sub">100% Retained</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Observable Audit Log Timeline -->
+    <section class="card audit-card">
+      <div class="card-header">
+        <span class="card-title">Observable Audit Trail</span>
+        <button id="btnClearAudit" class="link-btn">Clear</button>
+      </div>
+      <div class="timeline-container" id="timelineList">
+        <div class="timeline-empty">System ready. No tasks currently running.</div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>
